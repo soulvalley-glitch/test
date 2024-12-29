@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Persistent interactive Artwork</title>
+  <title>Persistent Interactive Artwork</title>
   <style>
     /* Global Styles */
     body {
       margin: 0;
       padding: 0;
       font-family: 'Orbitron', sans-serif;
-      background: url('https://images.unsplash.com/photo-1518770660439-4636190af475?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600') no-repeat center center fixed;
+      background: url('http://freestylersmusic.co.uk/wp-content/uploads/2015/03/wallpaper-apple-urban-graffiti-sandbox-images-189163.jpg') no-repeat center center fixed;
       background-size: cover;
       color: white;
       display: flex;
@@ -98,38 +98,60 @@
     </div>
   </div>
 
-  <script>
-    // Load saved images from localStorage when the page loads
-    document.addEventListener("DOMContentLoaded", () => {
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // Initialize Supabase
+    const supabase = createClient('https://ztrfqqswdzlmjbppdmlm.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cmZxcXN3ZHpsbWpicHBkbWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0Mzc1NTYsImV4cCI6MjA1MTAxMzU1Nn0._uomdHUf835EH_lVIoSAKAumzOQf5tcSfArIxmrWPUk');
+
+    // Load images from Supabase when the page loads
+    document.addEventListener("DOMContentLoaded", async () => {
       const cards = document.querySelectorAll(".image-card");
-      cards.forEach(card => {
+      for (let card of cards) {
         const cardId = card.getAttribute("data-id");
-        const savedImage = localStorage.getItem(cardId);
-        if (savedImage) {
+        const { data } = await supabase
+          .storage
+          .from('image')
+          .list('', { search: `${cardId}` });
+
+        if (data && data.length > 0) {
+          const publicUrl = supabase
+            .storage
+            .from('image')
+            .getPublicUrl(data[0].name).publicUrl;
           const imgElement = card.querySelector("img");
-          imgElement.src = savedImage;
+          imgElement.src = publicUrl;
         }
-      });
+      }
     });
 
-    // Update image and save it to localStorage
-    function updateImage(event, inputElement) {
+    async function updateImage(event, inputElement) {
       const file = event.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const imgElement = inputElement.previousElementSibling;
-          imgElement.src = e.target.result;
+        const cardId = inputElement.parentElement.getAttribute("data-id");
+        const fileName = `${cardId}-${Date.now()}-${file.name}`;
 
-          // Save the image data to localStorage
-          const cardId = inputElement.parentElement.getAttribute("data-id");
-          localStorage.setItem(cardId, e.target.result);
-        };
-        reader.readAsDataURL(file);
+        // Upload the file to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('image')
+          .upload(fileName, file);
+
+        if (error) {
+          console.error("Error uploading file:", error.message);
+          return;
+        }
+
+        // Get public URL and update the image on the page
+        const { publicUrl } = supabase.storage
+          .from('image')
+          .getPublicUrl(fileName);
+
+        const imgElement = inputElement.previousElementSibling;
+        imgElement.src = publicUrl;
       }
     }
 
-    // Click functionality for triggering file input
+    // Trigger file upload on card click
     document.querySelectorAll('.image-card').forEach(card => {
       card.addEventListener('click', function() {
         this.querySelector('input[type="file"]').click();
