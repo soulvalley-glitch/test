@@ -1,4 +1,0 @@
-const supabaseUrl = 'https://ztrfqqswdzlmjbppdmlm.supabase.co'; // Replace with your project URL
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cmZxcXN3ZHpsbWpicHBkbWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0Mzc1NTYsImV4cCI6MjA1MTAxMzU1Nn0._uomdHUf835EH_lVIoSAKAumzOQf5tcSfArIxmrWPUk'; // Replace with your anon key
-
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
